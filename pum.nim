@@ -40,6 +40,7 @@ proc handleRequest(client: TSocket, path, query: string): bool {.procvar.} =
 proc controlCHook() {.noconv.} =
     EraseLine() # Erase ^C
     writeln(stdout, "Bye!")
+    resetAttributes()
     quit(QuitSuccess)
 
 
@@ -50,9 +51,6 @@ if isMainModule:
     # Write a styled text on terminal
     setForegroundColor(fgGreen)
     writeln(stdout, "Pum is running on port 8888")
-
-    # Reset styled terminal
-    addQuitProc(resetAttributes)
 
     # Pum!
     run(handleRequest, TPort(8888))
