@@ -1,25 +1,12 @@
-from httpserver import run, serveFile
-from sockets import TSocket, TPort, send
+from httpserver import run
+from sockets import TSocket, TPort
 from terminal import EraseLine, setForegroundColor, fgGreen, resetAttributes
-from os import existsFile, getCurrentDir
+from os import getCurrentDir
 
-from security import isPathSafe
+from serve import safeServeFile
+from response import render
 
-
-proc renderTemplate(client: TSocket, tpl: string) =
-    var filename: string = "templates/" & tpl
-    if existsFile(filename):
-        serveFile(client, filename)
-    else:
-        client.send("Template " & tpl & " not found\n")
-
-
-proc home(client: TSocket) =
-    renderTemplate(client, "home.html")
-
-
-proc put(client: TSocket) =
-    renderTemplate(client, "put.html")
+from views import home, put
 
 
 proc handleRequest(client: TSocket, path, query: string): bool {.procvar.} =
@@ -28,14 +15,12 @@ proc handleRequest(client: TSocket, path, query: string): bool {.procvar.} =
         documentRoot = getCurrentDir()
 
     if path == "/":
-        home(client)
+        render(home(client), documentRoot)
     elif path == "/put":
-        put(client)
+        render(put(client), documentRoot)
     else:
-        var filename: string = "assets/" & path[1..high(path)]
-        if isPathSafe(filename, documentRoot) and existsFile(filename):
-            serveFile(client, filename)
-        client.send("File not found\n")
+        safeServeFile(client, "assets/" & path[1..high(path)], documentRoot)
+
     return false
 
 
