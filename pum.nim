@@ -2,23 +2,33 @@ from httpserver import run
 from sockets import TSocket, TPort
 from terminal import EraseLine, setForegroundColor, fgGreen, resetAttributes
 from os import getCurrentDir
+from re import re, match
 
 from serve import safeServeFile
 from response import render
+from urlpatterns import TPatterns
 
 from views import home, put
+
+
+var patterns = cast[TPatterns](@[
+    (re"^/put$", put),
+    (re"^/$", home)
+])
 
 
 proc handleRequest(client: TSocket, path, query: string): bool {.procvar.} =
     var
         path = path
         documentRoot = getCurrentDir()
+        found = False
 
-    if path == "/":
-        render(home(client), documentRoot)
-    elif path == "/put":
-        render(put(client), documentRoot)
-    else:
+    for pattern in patterns:
+        if not found and match(path, pattern.regex):
+            found = True
+            render(pattern.view(client), documentRoot)
+
+    if not found:
         safeServeFile(client, "assets/" & path[1..high(path)], documentRoot)
 
     return false
