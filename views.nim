@@ -1,12 +1,15 @@
-from sockets import TSocket
-from response import TTemplateResponse
+from request import PRequest
+from response import PResponse, PTemplateResponse, PFileResponse
 
 
-proc home*(client: TSocket): TTemplateResponse {.procvar.} =
-    return TTemplateResponse(template_name: "templates/home.html",
-                             client: client)
+proc home*(request: PRequest): PResponse {.cdecl.} =
+    return PTemplateResponse(template_name: "templates/home.html")
 
 
-proc put*(client: TSocket): TTemplateResponse {.procvar.} =
-    return TTemplateResponse(template_name: "templates/put.html",
-                             client: client)
+proc put*(request: PRequest): PResponse {.cdecl.} =
+    return PTemplateResponse(template_name: "templates/put.html")
+
+
+proc serveStatic*(request: PRequest): PResponse {.cdecl.} =
+    return PFileResponse(
+        filename: "assets/" & request.path[1..high(request.path)])

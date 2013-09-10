@@ -1,19 +1,23 @@
 from os import existsFile
 from sockets import TSocket
 
+from request import PRequest
 from serve import safeServeFile
 
 
 type
-    TResponse* {.inheritable.} = object
-        client*: TSocket
-    ## TTemplateResponse* = object of TResponse
-    # Not able to use inheritance:
-    # SIGSEGV: Illegal storage access. (Attempt to read from nil?)
-    TTemplateResponse* = object
-        client*: TSocket
+    PResponse* = ref object {.inheritable.}
+    PTemplateResponse* = ref object of PResponse
         template_name*: string
+    PFileResponse* = ref object of PResponse
+        filename*: string
 
 
-proc render*(response: TTemplateResponse, documentRoot: string) =
-    safeServeFile(response.client, response.template_name, documentRoot)
+method render*(response: PResponse, request: PRequest) =
+    quit "to override!"
+
+method render*(response: PTemplateResponse, request: PRequest) =
+    safeServeFile(request.client, response.template_name, request.documentRoot)
+
+method render*(response: PFileResponse, request: PRequest) =
+    safeServeFile(request.client, response.filename, request.documentRoot)

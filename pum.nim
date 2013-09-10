@@ -4,32 +4,28 @@ from terminal import EraseLine, setForegroundColor, fgGreen, resetAttributes
 from os import getCurrentDir
 from re import re, match
 
-from serve import safeServeFile
 from response import render
+from request import PRequest
 from urlpatterns import TPatterns
 
-from views import home, put
+from views import home, put, serveStatic
 
 
-var patterns = cast[TPatterns](@[
+var patterns: TPatterns = @[
     (re"^/put$", put),
-    (re"^/$", home)
-])
+    (re"^/$", home),
+    (re"", serveStatic),
+]
 
 
 proc handleRequest(client: TSocket, path, query: string): bool {.procvar.} =
-    var
-        path = path
-        documentRoot = getCurrentDir()
-        found = False
+    let request = PRequest(client: client, path: path, query: query,
+                           documentRoot: getCurrentDir())
 
     for pattern in patterns:
-        if not found and match(path, pattern.regex):
-            found = True
-            render(pattern.view(client), documentRoot)
-
-    if not found:
-        safeServeFile(client, "assets/" & path[1..high(path)], documentRoot)
+        if match(path, pattern.regex):
+            render(pattern.view(request), request)
+            break
 
     return false
 

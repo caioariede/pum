@@ -1,10 +1,10 @@
-from sockets import TSocket
-from response import TTemplateResponse
+from request import PRequest
+from response import PResponse
 from re import TRegEx
 
 type
-    TView = proc (client: TSocket): TTemplateResponse {.cdecl.}
-    TPattern = object
-        regex*: TRegEx
-        view*: TView
+    TView = proc (request: PRequest): PResponse {.cdecl.}
+    TPattern* = tuple
+        regex: TRegEx
+        view: TView
     TPatterns* = seq[TPattern]
