@@ -1,5 +1,5 @@
-from request import PRequest
-from response import PResponse, PTemplateResponse, PFileResponse
+from framework/request import PRequest
+from framework/response import PResponse, PTemplateResponse, PFileResponse
 
 
 proc home*(request: PRequest): PResponse {.cdecl.} =

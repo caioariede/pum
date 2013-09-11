@@ -2,7 +2,7 @@ from os import existsFile
 from sockets import TSocket, send
 from httpserver import run, serveFile
 
-from security import isPathSafe
+from framework/security import isPathSafe
 
 
 proc safeServeFile*(client: TSocket, filename: string, documentRoot: string) =

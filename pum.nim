@@ -4,9 +4,9 @@ from terminal import EraseLine, setForegroundColor, fgGreen, resetAttributes
 from os import getCurrentDir
 from re import re, match
 
-from response import render
-from request import PRequest
-from urlpatterns import TPatterns
+from framework/response import render
+from framework/request import PRequest
+from framework/urlpatterns import TPatterns
 
 from views import home, put, serveStatic
 

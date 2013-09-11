@@ -1,6 +1,8 @@
-from request import PRequest
-from response import PResponse
 from re import TRegEx
+
+from framework/request import PRequest
+from framework/response import PResponse
+
 
 type
     TView = proc (request: PRequest): PResponse {.cdecl.}

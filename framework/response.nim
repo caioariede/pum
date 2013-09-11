@@ -1,8 +1,8 @@
 from os import existsFile
 from sockets import TSocket
 
-from request import PRequest
-from serve import safeServeFile
+from framework/request import PRequest
+from framework/serve import safeServeFile
 
 
 type
