@@ -1,5 +1,5 @@
 from framework/request import PRequest
-from framework/response import PResponse, PTemplateResponse, PFileResponse
+from framework/response import PResponse, PTemplateResponse
 
 
 proc home*(request: PRequest): PResponse {.cdecl.} =
@@ -8,8 +8,3 @@ proc home*(request: PRequest): PResponse {.cdecl.} =
 
 proc put*(request: PRequest): PResponse {.cdecl.} =
     return PTemplateResponse(template_name: "templates/put.html")
-
-
-proc serveStatic*(request: PRequest): PResponse {.cdecl.} =
-    return PFileResponse(
-        filename: "assets/" & request.path[1..high(request.path)])

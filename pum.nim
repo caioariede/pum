@@ -7,8 +7,9 @@ from re import re, match
 from framework/response import render
 from framework/request import PRequest
 from framework/urlpatterns import TPatterns
+from framework/staticviews import serveStatic
 
-from views import home, put, serveStatic
+from views import home, put
 
 
 var patterns: TPatterns = @[
