@@ -27,21 +27,25 @@ type
     VariableToken = ref object of Token
 
 
-iterator tokenize(content: string): Token =
-    var matches: array[0..1, tuple[first, last: int]]
-    var start: int
-    var slice: string
+iterator tokenize(templateString: string): Token =
+    discard """
+    Returns a list of tokens from a given templateString
+    """
+    var
+        matches: array[0..1, tuple[first, last: int]]
+        start: int
+        slice: string
 
     while True:
-        if findBounds(content, regexTag, matches, start).first < 0:
+        if findBounds(templateString, regexTag, matches, start).first < 0:
             break
         else:
             for match in matches:
                 if match.last > 0:
                     if match.first > 0:
-                        slice = content[start..match.first - 1]
+                        slice = templateString[start..match.first - 1]
                         yield TextToken(content: slice, line: 0)
-                    slice = content[match.first..match.last]
+                    slice = templateString[match.first..match.last]
                     if slice.startsWith("{%"):
                         yield BlockToken(content: slice, line: 0)
                     elif slice.startsWith("{#"):
