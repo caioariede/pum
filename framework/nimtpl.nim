@@ -1,4 +1,4 @@
-from strutils import startsWith, `%`
+from strutils import startsWith, countLines, `%`
 from re import re, split, escapeRe, findBounds
 
 
@@ -35,6 +35,7 @@ iterator tokenize(templateString: string): Token =
         matches: array[0..1, tuple[first, last: int]]
         start: int
         slice: string
+        currentLine = 1
 
     while True:
         if findBounds(templateString, regexTag, matches, start).first < 0:
@@ -44,14 +45,16 @@ iterator tokenize(templateString: string): Token =
                 if match.last > 0:
                     if match.first > 0:
                         slice = templateString[start..match.first - 1]
-                        yield TextToken(content: slice, line: 0)
+                        yield TextToken(content: slice, line: currentLine)
+                        currentLine = currentLine + countLines(slice)
                     slice = templateString[match.first..match.last]
+                    currentLine = currentLine + countLines(slice)
                     if slice.startsWith("{%"):
-                        yield BlockToken(content: slice, line: 0)
+                        yield BlockToken(content: slice, line: currentLine)
                     elif slice.startsWith("{#"):
-                        yield CommentToken(content: slice, line: 0)
+                        yield CommentToken(content: slice, line: currentLine)
                     else:
-                        yield VariableToken(content: slice, line: 0)
+                        yield VariableToken(content: slice, line: currentLine)
                     start = match.last + 1
 
 
@@ -60,19 +63,19 @@ method parse(token: Token) =
 
 
 method parse(token: TextToken) =
-    echo("Text: " & token.content)
+    echo("Text: " & token.content & " (Line " & $token.line & ")")
 
 
 method parse(token: BlockToken) =
-    echo("Block: " & token.content)
+    echo("Block: " & token.content & " (Line " & $token.line & ")")
 
 
 method parse(token: VariableToken) =
-    echo("Variable: " & token.content)
+    echo("Variable: " & token.content & " (Line " & $token.line & ")")
 
 
 method parse(token: CommentToken) =
-    echo("Comment: " & token.content)
+    echo("Comment: " & token.content & " (Line " & $token.line & ")")
 
 
 for token in tokenize("""<ul>
