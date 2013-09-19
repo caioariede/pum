@@ -1,4 +1,4 @@
-from strutils import startsWith, countLines, `%`
+from strutils import startsWith, countLines, find, `%`
 from re import re, split, escapeRe, findBounds
 
 
@@ -23,11 +23,39 @@ type
         line: int
     TextToken = ref object of Token
     BlockToken = ref object of Token
+        name: string
     CommentToken = ref object of Token
     VariableToken = ref object of Token
 
 
-iterator tokenize(templateString: string): Token =
+type
+    RenderedTag = tuple
+        index: int
+        content: string
+    TParser = proc(index: int, tokens: seq[Token], tags: seq[Tag]): RenderedTag {.closure.}
+    Tag = tuple
+        name: string
+        fn: TParser
+
+
+proc getBlockToken(slice: string, currentLine: int): BlockToken =
+    var name = slice[3..slice.find({' '}, 3) - 1]
+    return BlockToken(name: name, content: slice, line: currentLine)
+
+
+proc getTextToken(slice: string, currentLine: int): TextToken =
+    return TextToken(content: slice, line: currentLine)
+
+
+proc getCommentToken(slice: string, currentLine: int): CommentToken =
+    return CommentToken(content: slice, line: currentLine)
+
+
+proc getVariableToken(slice: string, currentLine: int): VariableToken =
+    return VariableToken(content: slice, line: currentLine)
+
+
+proc tokenize(templateString: string): seq[Token] =
     discard """
     Returns a list of tokens from a given templateString
     """
@@ -36,6 +64,8 @@ iterator tokenize(templateString: string): Token =
         start: int
         slice: string
         currentLine = 1
+        tokens: seq[Token] = @[]
+        templateSize = high(templateString)
 
     while True:
         if findBounds(templateString, regexTag, matches, start).first < 0:
@@ -44,43 +74,91 @@ iterator tokenize(templateString: string): Token =
             for match in matches:
                 if match.last > 0:
                     if match.first > 0:
+                        # Match text before token found
                         slice = templateString[start..match.first - 1]
-                        yield TextToken(content: slice, line: currentLine)
-                        currentLine = currentLine + countLines(slice)
-                    slice = templateString[match.first..match.last]
-                    currentLine = currentLine + countLines(slice)
-                    if slice.startsWith("{%"):
-                        yield BlockToken(content: slice, line: currentLine)
-                    elif slice.startsWith("{#"):
-                        yield CommentToken(content: slice, line: currentLine)
-                    else:
-                        yield VariableToken(content: slice, line: currentLine)
+                        add(tokens, getTextToken(slice, currentLine))
+                        currentLine += countLines(slice)
+                    # Identify matched token
                     start = match.last + 1
+                    slice = templateString[match.first..match.last]
+                    currentLine += countLines(slice)
+                    if slice.startsWith(blockTagStart):
+                        add(tokens, getBlockToken(slice, currentLine))
+                    elif slice.startsWith(commentTagStart):
+                        add(tokens, getCommentToken(slice, currentLine))
+                    elif slice.startsWith(variableTagStart):
+                        add(tokens, getVariableToken(slice, currentLine))
+                    else:
+                        add(tokens, getTextToken(slice, currentLine))
+
+    if start < templateSize:
+        slice = templateString[start..templateSize]
+        currentLine += countLines(slice)
+        add(tokens, getTextToken(slice, currentLine))
+
+    return tokens
 
 
-method parse(token: Token) =
-    quit("to override!")
+iterator parse(tokens: seq[Token], tags: seq[Tag], start: int, until: seq[string]): RenderedTag =
+    var
+        output: RenderedTag
+        token: Token
+        index = start
+
+    block parsing:
+        while index < tokens.len:
+            token = tokens[index]
+            inc(index)
+            if token of BlockToken:
+                let blockToken = cast[BlockToken](token)
+                for tag in tags:
+                    if tag.name == blockToken.name:
+                        output = tag.fn(index - 1, tokens, tags)
+                        index = output.index
+                        yield output
+                        break
+                # stops if needed
+                if blockToken.name in until:
+                    yield (index: index, content: "")
+                    break parsing
+            elif token of VariableToken:
+                yield (index: index + 1, content: token.content)
+            elif token of CommentToken:
+                yield (index: index + 1, content: token.content)
+            elif token of TextToken:
+                yield (index: index + 1, content: token.content)
 
 
-method parse(token: TextToken) =
-    echo("Text: " & token.content & " (Line " & $token.line & ")")
+iterator parse(tokens: seq[Token], tags: seq[Tag]): string =
+    for output in parse(tokens, tags, 0, @[]):
+        yield output.content
 
 
-method parse(token: BlockToken) =
-    echo("Block: " & token.content & " (Line " & $token.line & ")")
+proc parse_for(index: int, tokens: seq[Token], tags: seq[Tag]): RenderedTag {.closure.} =
+    var
+        newIndex = index + 1
+        content = ""
+        repeatedContent = ""
+
+    for output in parse(tokens, tags, newIndex, @["endfor", "empty"]):
+        content = content & output.content
+        newIndex = output.index
+
+    for i in [1, 2, 3]:
+        repeatedContent = repeatedContent & content
+
+    return (index: newIndex, content: repeatedContent)
 
 
-method parse(token: VariableToken) =
-    echo("Variable: " & token.content & " (Line " & $token.line & ")")
-
-
-method parse(token: CommentToken) =
-    echo("Comment: " & token.content & " (Line " & $token.line & ")")
-
-
-for token in tokenize("""<ul>
+let tokens = tokenize("""<ul>
     {% for x in list %}
         <li>{{ x }}</li>
     {% endfor %}
-</ul>"""):
-    parse(token)
+</ul>""")
+
+let tags: seq[Tag] = @[
+    ("for", parse_for),
+]
+
+for output in parse(tokens, tags):
+    echo(output)
