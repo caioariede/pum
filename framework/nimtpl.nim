@@ -1,4 +1,4 @@
-from strutils import startsWith, countLines, find, `%`
+from strutils import startsWith, countLines, find, strip, `%`
 from re import re, split, escapeRe, findBounds
 
 
@@ -29,10 +29,21 @@ type
 
 
 type
+    TContextKind = enum
+        justString
+        sequenceOfStrings
+    TContextValue = object
+        key: string
+        case kind: TContextKind
+        of justString: justStr: string
+        of sequenceOfStrings: seqStr: seq[string]
+    ContextValue = ref TContextValue
+    Context = seq[ContextValue]
     RenderedTag = tuple
         index: int
         content: string
-    TParser = proc(index: int, tokens: seq[Token], tags: seq[Tag]): RenderedTag {.closure.}
+    TParser = proc(index: int, tokens: seq[Token],
+                   tags: seq[Tag], ctx: var Context): RenderedTag {.closure.}
     Tag = tuple
         name: string
         fn: TParser
@@ -53,6 +64,24 @@ proc getCommentToken(slice: string, currentLine: int): CommentToken =
 
 proc getVariableToken(slice: string, currentLine: int): VariableToken =
     return VariableToken(content: slice, line: currentLine)
+
+
+proc setContextValue[T](ctx: var Context, key: string, value: T) =
+    add(ctx, (key: key, value: cast[T](value)))
+
+
+proc getContextVariable(ctx: var Context, key: string): ContextValue =
+    for item in items(ctx):
+        if item.key == key:
+            return item
+    return nil
+
+
+proc remContextVariable(ctx: var Context, key: string) =
+    for i in 0..high(ctx):
+        if ctx[i].key == key:
+            del(ctx, i)
+            break
 
 
 proc tokenize(templateString: string): seq[Token] =
@@ -99,7 +128,13 @@ proc tokenize(templateString: string): seq[Token] =
     return tokens
 
 
-iterator parse(tokens: seq[Token], tags: seq[Tag], start: int, until: seq[string]): RenderedTag =
+proc parseVariable(content: string, ctx: var Context): string =
+    let variableName = strip(content[2..content.len-3])
+    return getContextVariable(ctx, variableName).justStr
+
+
+iterator parse(tokens: seq[Token], tags: seq[Tag], ctx: var Context,
+               start: int, until: seq[string]): RenderedTag =
     var
         output: RenderedTag
         token: Token
@@ -113,7 +148,7 @@ iterator parse(tokens: seq[Token], tags: seq[Tag], start: int, until: seq[string
                 let blockToken = cast[BlockToken](token)
                 for tag in tags:
                     if tag.name == blockToken.name:
-                        output = tag.fn(index - 1, tokens, tags)
+                        output = tag.fn(index - 1, tokens, tags, ctx)
                         index = output.index
                         yield output
                         break
@@ -122,30 +157,52 @@ iterator parse(tokens: seq[Token], tags: seq[Tag], start: int, until: seq[string
                     yield (index: index, content: "")
                     break parsing
             elif token of VariableToken:
-                yield (index: index + 1, content: token.content)
+                yield (index: index + 1,
+                       content: parseVariable(token.content, ctx))
             elif token of CommentToken:
                 yield (index: index + 1, content: token.content)
             elif token of TextToken:
                 yield (index: index + 1, content: token.content)
 
 
-iterator parse(tokens: seq[Token], tags: seq[Tag]): string =
-    for output in parse(tokens, tags, 0, @[]):
+iterator parse(tokens: seq[Token], tags: seq[Tag], ctx: var Context): string =
+    for output in parse(tokens, tags, ctx, 0, @[]):
         yield output.content
 
 
-proc parse_for(index: int, tokens: seq[Token], tags: seq[Tag]): RenderedTag {.closure.} =
+proc parseFor(content: string): tuple[counter: string, variable: string] =
+    var
+        forPos = content.find("for")
+        afterFor = strip(content[forPos+3..content.len-3])
+        inPos = afterFor.find(" in ")
+        counterName = strip(afterFor[0..inPos])
+        variableName = strip(afterFor[inPos+3..afterFor.len])
+
+    return (counter: counterName, variable: variableName)
+
+
+proc tagFor(index: int, tokens: seq[Token], tags: seq[Tag],
+               ctx: var Context): RenderedTag {.closure.} =
     var
         newIndex = index + 1
         content = ""
         repeatedContent = ""
 
-    for output in parse(tokens, tags, newIndex, @["endfor", "empty"]):
-        content = content & output.content
-        newIndex = output.index
+    let tagFor = parseFor(tokens[index].content)
 
-    for i in [1, 2, 3]:
+    let counterName = tagFor.counter
+    let variable = getContextVariable(ctx, tagFor.variable)
+
+    for value in variable.seqStr:
+        add(ctx, ContextValue(key: counterName, kind: justString, justStr: value))
+
+        for output in parse(tokens, tags, ctx, newIndex, @["endfor", "empty"]):
+            content = content & output.content
+            newIndex = output.index
+
         repeatedContent = repeatedContent & content
+
+        remContextVariable(ctx, counterName)
 
     return (index: newIndex, content: repeatedContent)
 
@@ -157,8 +214,12 @@ let tokens = tokenize("""<ul>
 </ul>""")
 
 let tags: seq[Tag] = @[
-    ("for", parse_for),
+    ("for", tagFor),
 ]
 
-for output in parse(tokens, tags):
+var ctx = @[
+    ContextValue(key: "list", kind: sequenceOfStrings, seqStr: @["a", "b", "c"]),
+]
+
+for output in parse(tokens, tags, ctx):
     echo(output)
