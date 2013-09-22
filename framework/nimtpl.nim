@@ -133,40 +133,48 @@ proc parseVariable(content: string, ctx: var Context): string =
     return getContextVariable(ctx, variableName).justStr
 
 
+proc getTokensUntil(tokens: seq[Token], start: int,
+                    until: seq[string]): seq[Token] =
+    var tokensUntil: seq[Token] = @[]
+    block parsing:
+        for token in tokens[start..high(tokens)]:
+            add(tokensUntil, token)
+            if token of BlockToken:
+                let blockToken = cast[BlockToken](token)
+                if blockToken.name in until:
+                    break parsing
+    return tokensUntil
+
+
 iterator parse(tokens: seq[Token], tags: seq[Tag], ctx: var Context,
-               start: int, until: seq[string]): RenderedTag =
+               start: int): RenderedTag =
     var
         output: RenderedTag
         token: Token
         index = start
 
-    block parsing:
-        while index < tokens.len:
-            token = tokens[index]
-            inc(index)
-            if token of BlockToken:
-                let blockToken = cast[BlockToken](token)
-                for tag in tags:
-                    if tag.name == blockToken.name:
-                        output = tag.fn(index - 1, tokens, tags, ctx)
-                        index = output.index
-                        yield output
-                        break
-                # stops if needed
-                if blockToken.name in until:
-                    yield (index: index, content: "")
-                    break parsing
-            elif token of VariableToken:
-                yield (index: index + 1,
-                       content: parseVariable(token.content, ctx))
-            elif token of CommentToken:
-                yield (index: index + 1, content: token.content)
-            elif token of TextToken:
-                yield (index: index + 1, content: token.content)
+    while index < tokens.len:
+        token = tokens[index]
+        inc(index)
+        if token of BlockToken:
+            let blockToken = cast[BlockToken](token)
+            for tag in tags:
+                if tag.name == blockToken.name:
+                    output = tag.fn(index - 1, tokens, tags, ctx)
+                    index = output.index
+                    yield output
+                    break
+        elif token of VariableToken:
+            yield (index: index + 1,
+                   content: parseVariable(token.content, ctx))
+        elif token of CommentToken:
+            yield (index: index + 1, content: token.content)
+        elif token of TextToken:
+            yield (index: index + 1, content: token.content)
 
 
 iterator parse(tokens: seq[Token], tags: seq[Tag], ctx: var Context): string =
-    for output in parse(tokens, tags, ctx, 0, @[]):
+    for output in parse(tokens, tags, ctx, 0):
         yield output.content
 
 
@@ -184,23 +192,53 @@ proc parseFor(content: string): tuple[counter: string, variable: string] =
 proc tagFor(index: int, tokens: seq[Token], tags: seq[Tag],
                ctx: var Context): RenderedTag {.closure.} =
     var
-        nextIndex = index + 1
         newIndex = 0
         repeatedContent = ""
+        nextTokens: seq[Token]
 
     let tagFor = parseFor(tokens[index].content)
-
     let counterName = tagFor.counter
     let variable = getContextVariable(ctx, tagFor.variable)
+    let variableValue = variable.seqStr
 
-    for value in variable.seqStr:
-        add(ctx, ContextValue(key: counterName, kind: justString, justStr: value))
+    nextTokens = getTokensUntil(tokens, index + 1, @["endfor", "empty"])
+    newIndex = index + nextTokens.len
 
-        for output in parse(tokens, tags, ctx, nextIndex, @["endfor", "empty"]):
-            repeatedContent = repeatedContent & output.content
-            newIndex = output.index
+    if variableValue.len > 0:
+        # Consume the for contents until "endfor" or "empty"
+        for value in variable.seqStr:
+            add(ctx, ContextValue(key: counterName, kind: justString,
+                                  justStr: value))
 
-        remContextVariable(ctx, counterName)
+            for output in parse(nextTokens, tags, ctx, 0):
+                repeatedContent = repeatedContent & output.content
+
+            remContextVariable(ctx, counterName)
+
+    # nextToken must be "endfor" or "empty"
+    var nextToken = tokens[newIndex]
+
+    if nextToken of BlockToken:
+        # In case next token is {% empty %}
+        let nextBlockToken = cast[BlockToken](nextToken)
+        if nextBlockToken.name == "empty":
+            nextTokens = getTokensUntil(tokens, newIndex + 1, @["endfor"])
+            newIndex = newIndex + nextTokens.len
+            nextToken = tokens[newIndex]
+            if variableValue.len == 0:
+                for output in parse(nextTokens, tags, ctx, 0):
+                    repeatedContent = repeatedContent & output.content
+
+    var endForFound = false
+
+    if nextToken of BlockToken:
+        # Check if {% endfor %} is correctly placed
+        let nextBlockToken = cast[BlockToken](nextToken)
+        if nextBlockToken.name == "endfor":
+            endForFound = true
+
+    if not endForFound:
+        quit "{% endfor %} expected"
 
     return (index: newIndex, content: repeatedContent)
 
@@ -208,6 +246,8 @@ proc tagFor(index: int, tokens: seq[Token], tags: seq[Tag],
 let tokens = tokenize("""<ul>
     {% for x in list %}
         <li>{{ x }}</li>
+    {% empty %}
+        <li>empty</li>
     {% endfor %}
 </ul>""")
 
@@ -216,7 +256,7 @@ let tags: seq[Tag] = @[
 ]
 
 var ctx = @[
-    ContextValue(key: "list", kind: sequenceOfStrings, seqStr: @["a", "b", "c"]),
+    ContextValue(key: "list", kind: sequenceOfStrings, seqStr: @[]),
 ]
 
 for output in parse(tokens, tags, ctx):
