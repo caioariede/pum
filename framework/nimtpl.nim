@@ -184,8 +184,8 @@ proc parseFor(content: string): tuple[counter: string, variable: string] =
 proc tagFor(index: int, tokens: seq[Token], tags: seq[Tag],
                ctx: var Context): RenderedTag {.closure.} =
     var
-        newIndex = index + 1
-        content = ""
+        nextIndex = index + 1
+        newIndex = 0
         repeatedContent = ""
 
     let tagFor = parseFor(tokens[index].content)
@@ -196,11 +196,9 @@ proc tagFor(index: int, tokens: seq[Token], tags: seq[Tag],
     for value in variable.seqStr:
         add(ctx, ContextValue(key: counterName, kind: justString, justStr: value))
 
-        for output in parse(tokens, tags, ctx, newIndex, @["endfor", "empty"]):
-            content = content & output.content
+        for output in parse(tokens, tags, ctx, nextIndex, @["endfor", "empty"]):
+            repeatedContent = repeatedContent & output.content
             newIndex = output.index
-
-        repeatedContent = repeatedContent & content
 
         remContextVariable(ctx, counterName)
 
