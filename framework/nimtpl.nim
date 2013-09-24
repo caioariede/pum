@@ -35,15 +35,17 @@ type
     TContextValue = object
         key: string
         case kind: TContextKind
-        of justString: justStr: string
-        of sequenceOfStrings: seqStr: seq[string]
-    ContextValue = ref TContextValue
-    Context = seq[ContextValue]
+        of justString:
+            justStr: string
+        of sequenceOfStrings:
+            seqStr: seq[string]
+    PContextValue = ref TContextValue
+    Context* = seq[PContextValue]
     RenderedTag = tuple
         index: int
         content: string
     TParser = proc(index: int, tokens: seq[Token],
-                   tags: seq[Tag], ctx: var Context): RenderedTag {.closure.}
+                   tags: seq[Tag], ctx: var Context): RenderedTag {.cdecl.}
     Tag = tuple
         name: string
         fn: TParser
@@ -70,7 +72,7 @@ proc setContextValue[T](ctx: var Context, key: string, value: T) =
     add(ctx, (key: key, value: cast[T](value)))
 
 
-proc getContextVariable(ctx: var Context, key: string): ContextValue =
+proc getContextVariable(ctx: var Context, key: string): PContextValue =
     for item in items(ctx):
         if item.key == key:
             return item
@@ -190,7 +192,7 @@ proc parseFor(content: string): tuple[counter: string, variable: string] =
 
 
 proc tagFor(index: int, tokens: seq[Token], tags: seq[Tag],
-               ctx: var Context): RenderedTag {.closure.} =
+               ctx: var Context): RenderedTag {.cdecl.} =
     var
         newIndex = 0
         repeatedContent = ""
@@ -207,8 +209,8 @@ proc tagFor(index: int, tokens: seq[Token], tags: seq[Tag],
     if variableValue.len > 0:
         # Consume the for contents until "endfor" or "empty"
         for value in variable.seqStr:
-            add(ctx, ContextValue(key: counterName, kind: justString,
-                                  justStr: value))
+            add(ctx, PContextValue(key: counterName, kind: justString,
+                                   justStr: value))
 
             for output in parse(nextTokens, tags, ctx, 0):
                 repeatedContent = repeatedContent & output.content
@@ -243,21 +245,38 @@ proc tagFor(index: int, tokens: seq[Token], tags: seq[Tag],
     return (index: newIndex, content: repeatedContent)
 
 
-let tokens = tokenize("""<ul>
-    {% for x in list %}
-        <li>{{ x }}</li>
-    {% empty %}
-        <li>empty</li>
-    {% endfor %}
-</ul>""")
+proc renderTemplate*(content: string, ctx: var Context): string =
+    let tokens = tokenize(content)
+    let tags: seq[Tag] = @[
+        ("for", tagFor),
+    ]
 
-let tags: seq[Tag] = @[
-    ("for", tagFor),
-]
+    result = ""
 
-var ctx = @[
-    ContextValue(key: "list", kind: sequenceOfStrings, seqStr: @[]),
-]
+    for output in parse(tokens, tags, ctx):
+        result = result & output
 
-for output in parse(tokens, tags, ctx):
-    echo(output)
+
+proc ctxVal*[T](key: string, list: T): PContextValue =
+    return PContextValue(key: key, kind: sequenceOfStrings, seqStr: list)
+
+
+if isMainModule:
+    let tokens = tokenize("""<ul>
+        {% for x in list %}
+            <li>{{ x }}</li>
+        {% empty %}
+            <li>empty</li>
+        {% endfor %}
+    </ul>""")
+
+    let tags: seq[Tag] = @[
+        ("for", tagFor),
+    ]
+
+    var ctx = @[
+        ctxVal[seq[string]]("list", @[]),
+    ]
+
+    for output in parse(tokens, tags, ctx):
+        echo(output)

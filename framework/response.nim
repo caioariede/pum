@@ -1,8 +1,9 @@
 from os import existsFile
-from sockets import TSocket
+from sockets import TSocket, send
 
 from framework/request import PRequest
 from framework/serve import safeServeFile
+from framework/nimtpl import renderTemplate, Context, ctxVal
 
 
 type
@@ -16,8 +17,17 @@ type
 method render*(response: PResponse, request: PRequest) =
     quit "to override!"
 
-method render*(response: PTemplateResponse, request: PRequest) =
-    safeServeFile(request.client, response.template_name, request.documentRoot)
 
 method render*(response: PFileResponse, request: PRequest) =
     safeServeFile(request.client, response.filename, request.documentRoot)
+
+
+method render*(response: PTemplateResponse, request: PRequest) =
+    var ctx: Context = @[
+        ctxVal[seq[string]]("letters", @["a", "b", "c"]),
+    ]
+
+    let templateString = readFile(response.template_name)
+    let renderedTemplate = renderTemplate(templateString, ctx)
+
+    request.client.send(renderedTemplate)
