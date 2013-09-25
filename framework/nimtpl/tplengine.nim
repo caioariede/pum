@@ -1,6 +1,9 @@
 from strutils import startsWith, countLines, find, strip, `%`
 from re import re, split, escapeRe, findBounds
 
+from framework/nimtpl/tplcontext import Context, getContextVariable,
+    setContextVariable, remContextVariable, TContextValue, ctxVal
+
 
 const
     blockTagStart = "{%"
@@ -29,18 +32,6 @@ type
 
 
 type
-    TContextKind = enum
-        justString
-        sequenceOfStrings
-    TContextValue = object
-        key: string
-        case kind: TContextKind
-        of justString:
-            justStr: string
-        of sequenceOfStrings:
-            seqStr: seq[string]
-    PContextValue = ref TContextValue
-    Context* = seq[PContextValue]
     RenderedTag = tuple
         index: int
         content: string
@@ -66,24 +57,6 @@ proc getCommentToken(slice: string, currentLine: int): CommentToken =
 
 proc getVariableToken(slice: string, currentLine: int): VariableToken =
     return VariableToken(content: slice, line: currentLine)
-
-
-proc setContextValue[T](ctx: var Context, key: string, value: T) =
-    add(ctx, (key: key, value: cast[T](value)))
-
-
-proc getContextVariable(ctx: var Context, key: string): PContextValue =
-    for item in items(ctx):
-        if item.key == key:
-            return item
-    return nil
-
-
-proc remContextVariable(ctx: var Context, key: string) =
-    for i in 0..high(ctx):
-        if ctx[i].key == key:
-            del(ctx, i)
-            break
 
 
 proc tokenize(templateString: string): seq[Token] =
@@ -209,8 +182,7 @@ proc tagFor(index: int, tokens: seq[Token], tags: seq[Tag],
     if variableValue.len > 0:
         # Consume the for contents until "endfor" or "empty"
         for value in variable.seqStr:
-            add(ctx, PContextValue(key: counterName, kind: justString,
-                                   justStr: value))
+            setContextVariable[string](ctx, counterName, value)
 
             for output in parse(nextTokens, tags, ctx, 0):
                 repeatedContent = repeatedContent & output.content
@@ -255,10 +227,6 @@ proc renderTemplate*(content: string, ctx: var Context): string =
 
     for output in parse(tokens, tags, ctx):
         result = result & output
-
-
-proc ctxVal*[T](key: string, list: T): PContextValue =
-    return PContextValue(key: key, kind: sequenceOfStrings, seqStr: list)
 
 
 if isMainModule:

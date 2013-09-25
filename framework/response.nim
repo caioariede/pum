@@ -3,7 +3,9 @@ from sockets import TSocket, send
 
 from framework/request import PRequest
 from framework/serve import safeServeFile
-from framework/nimtpl import renderTemplate, Context, ctxVal
+
+from framework/nimtpl/tplengine import renderTemplate
+from framework/nimtpl/tplcontext import Context, ctxVal
 
 
 type
