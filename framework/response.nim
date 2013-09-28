@@ -5,13 +5,14 @@ from framework/request import PRequest
 from framework/serve import safeServeFile
 
 from framework/nimtpl/tplengine import renderTemplate
-from framework/nimtpl/tplcontext import Context, ctxVal
+from framework/nimtpl/tplcontext import Context
 
 
 type
     PResponse* = ref object {.inheritable.}
     PTemplateResponse* = ref object of PResponse
         template_name*: string
+        context*: Context
     PFileResponse* = ref object of PResponse
         filename*: string
 
@@ -25,11 +26,7 @@ method render*(response: PFileResponse, request: PRequest) =
 
 
 method render*(response: PTemplateResponse, request: PRequest) =
-    var ctx: Context = @[
-        ctxVal[seq[string]]("letters", @["a", "b", "c"]),
-    ]
-
     let templateString = readFile(response.template_name)
-    let renderedTemplate = renderTemplate(templateString, ctx)
+    let renderedTemplate = renderTemplate(templateString, response.context)
 
     request.client.send(renderedTemplate)
