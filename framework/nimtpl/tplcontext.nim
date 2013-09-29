@@ -31,5 +31,8 @@ proc remContextVariable*(ctx: var Context, key: string) =
             break
 
 
-proc ctxVal*[T](key: string, list: T): PContextValue =
-    return PContextValue(key: key, kind: sequenceOfStrings, seqStr: list)
+proc ctxVal*[T](key: string, val: T): PContextValue =
+    when T is seq[string]:
+        return PContextValue(key: key, kind: sequenceOfStrings, seqStr: val)
+    elif T is string:
+        return PContextValue(key: key, kind: justString, justStr: val)

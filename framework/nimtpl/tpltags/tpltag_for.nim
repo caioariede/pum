@@ -4,6 +4,7 @@ from framework/nimtpl/tpltokenizer import Token, BlockToken, getTokensUntil
 from framework/nimtpl/tplparser import Tag, RenderedTag, parse
 from framework/nimtpl/tplcontext import Context, getContextVariable,
     setContextVariable, remContextVariable
+from framework/nimtpl/tplexceptions import ETemplateSyntaxError
 
 
 proc parseFor(content: string): tuple[counter: string, variable: string] =
@@ -65,6 +66,7 @@ proc tagFor*(index: int, tokens: seq[Token], tags: seq[Tag],
             endForFound = true
 
     if not endForFound:
-        quit "{% endfor %} expected"
+        raise newException(
+            ETemplateSyntaxError, "Expected {% endfor %} not found.")
 
     return (index: newIndex, content: repeatedContent)

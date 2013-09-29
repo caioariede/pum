@@ -5,6 +5,7 @@ from re import re, match
 from framework/urlpatterns import TPatterns
 from framework/request import PRequest
 from framework/response import render
+from framework/exceptions/excviews import exceptionView
 
 
 type
@@ -19,7 +20,11 @@ proc getHandler*(patterns: TPatterns): handlerCallback =
 
         for pattern in patterns:
             if match(path, pattern.regex):
-                render(pattern.view(request), request)
+                try:
+                    render(pattern.view(request), request)
+                except:
+                    render(exceptionView(request, getCurrentException()),
+                           request)
                 break
 
         return false
