@@ -66,7 +66,10 @@ proc tagFor*(index: int, tokens: seq[Token], tags: seq[Tag],
             endForFound = true
 
     if not endForFound:
-        raise newException(
-            ETemplateSyntaxError, "Expected {% endfor %} not found.")
+        var exc: ref ETemplateSyntaxError = newException(
+            ETemplateSyntaxError,
+            "Expected {% endfor %} not found.")
+        exc.templateLine = nextToken.line
+        raise exc
 
     return (index: newIndex, content: repeatedContent)
