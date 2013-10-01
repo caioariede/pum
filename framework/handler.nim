@@ -20,6 +20,7 @@ proc getHandler*(patterns: TPatterns): handlerCallback =
 
         for pattern in patterns:
             if match(path, pattern.regex):
+                echo(path)
                 try:
                     render(pattern.view(request), request)
                 except:

@@ -25,7 +25,8 @@ proc tagFor*(index: int, tokens: seq[Token], tags: seq[Tag],
         repeatedContent = ""
         nextTokens: seq[Token]
 
-    let tagFor = parseFor(tokens[index].content)
+    let forToken = cast[BlockToken](tokens[index])
+    let tagFor = parseFor(forToken.content)
     let counterName = tagFor.counter
     let variable = getContextVariable(ctx, tagFor.variable)
     let variableValue = variable.seqStr
@@ -69,7 +70,7 @@ proc tagFor*(index: int, tokens: seq[Token], tags: seq[Tag],
         var exc: ref ETemplateSyntaxError = newException(
             ETemplateSyntaxError,
             "Expected {% endfor %} not found.")
-        exc.templateLine = nextToken.line
+        exc.templateLine = forToken.line
         raise exc
 
     return (index: newIndex, content: repeatedContent)

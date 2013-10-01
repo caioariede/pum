@@ -3,9 +3,12 @@ from framework/nimtpl/tpltokenizer import tokenize
 from framework/nimtpl/tplparser import Tag, parse
 
 from framework/nimtpl/tpltags/tpltag_for import tagFor
+from framework/nimtpl/tplexceptions import ETemplateSyntaxError
 
 
-proc renderTemplate*(content: string, ctx: var Context): string =
+proc renderTemplate*(content: string, templateName: string,
+                     ctx: var Context): string =
+
     let tokens = tokenize(content)
     let tags: seq[Tag] = @[
         ("for", tagFor),
@@ -13,8 +16,13 @@ proc renderTemplate*(content: string, ctx: var Context): string =
 
     result = ""
 
-    for output in parse(tokens, tags, ctx):
-        result = result & output
+    try:
+        for output in parse(tokens, tags, ctx):
+            result = result & output
+    except:
+        var exc = cast[ref ETemplateSyntaxError](getCurrentException())
+        exc.templateName = templateName
+        raise exc
 
 
 if isMainModule:

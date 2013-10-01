@@ -9,5 +9,5 @@ from views import home, put
 var patterns*: TPatterns = @[
     (re"^/put$", put),
     (re"^/$", home),
-    (re"", serveStatic),
+    (re".*", serveStatic),
 ]

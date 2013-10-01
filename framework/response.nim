@@ -27,6 +27,8 @@ method render*(response: PFileResponse, request: PRequest) =
 
 method render*(response: PTemplateResponse, request: PRequest) =
     let templateString = readFile(response.template_name)
-    let renderedTemplate = renderTemplate(templateString, response.context)
+    let renderedTemplate = renderTemplate(templateString,
+                                          response.template_name,
+                                          response.context)
 
     request.client.send(renderedTemplate)

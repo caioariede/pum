@@ -1,9 +1,22 @@
 <html>
     <head>
-        <h1>Exception: ETemplateSyntaxError</h1>
+        <link rel="stylesheet" type="text/css" href="/framework/static/css/error.css" />
     </head>
     <body>
+        <h1>Exception: ETemplateSyntaxError</h1>
         <p>{{ message }}</p>
         <p>Line: {{ templateLine }}</p>
+        <h2>Template</h2>
+        <ul>
+            {% for line in templateLinesAround %}
+                <li>{{ line }}</li>
+            {% endfor %}
+        </ul>
+        <h2>Stacktrace</h2>
+        <ul>
+            {% for trace in stacktrace %}
+                <li>{{ trace }}</li>
+            {% endfor %}
+        </ul>
     </body>
 </html>
