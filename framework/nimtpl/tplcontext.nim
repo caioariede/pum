@@ -1,3 +1,6 @@
+from framework/utils/tables2 import TTable, del, add, `[]`
+
+
 type
     TContextKind = enum
         justString
@@ -10,29 +13,30 @@ type
         of sequenceOfStrings:
             seqStr*: seq[string]
     PContextValue = ref TContextValue
-    Context* = seq[PContextValue]
+    Context* = TTable[string, PContextValue]
 
 
 proc setContextVariable*[T](ctx: var Context, key: string, value: T) =
-    add(ctx, PContextValue(key: key, kind: justString, justStr: value))
+    add(ctx, key, PContextValue(key: key, kind: justString, justStr: value))
 
 
 proc getContextVariable*(ctx: var Context, key: string): PContextValue =
-    for item in items(ctx):
-        if item.key == key:
-            return item
-    return nil
+    return ctx[key]
 
 
 proc remContextVariable*(ctx: var Context, key: string) =
-    for i in 0..high(ctx):
-        if ctx[i].key == key:
-            del(ctx, i)
-            break
+    del(ctx, key)
 
 
-proc ctxVal*[T](key: string, val: T): PContextValue =
+proc ctxVal*[T](ctx: var Context, key: string, val: T) =
     when T is seq[string]:
-        return PContextValue(key: key, kind: sequenceOfStrings, seqStr: val)
+        add(ctx, key, PContextValue(
+            key: key, kind: sequenceOfStrings, seqStr: val))
     elif T is string:
-        return PContextValue(key: key, kind: justString, justStr: val)
+        add(ctx, key, PContextValue(
+            key: key, kind: justString, justStr: val))
+
+
+proc getContext*(): Context =
+    result.counter = 0
+    newSeq(result.data, 64)

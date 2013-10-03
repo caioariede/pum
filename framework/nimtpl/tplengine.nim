@@ -38,9 +38,7 @@ if isMainModule:
         ("for", tagFor),
     ]
 
-    var ctx = @[
-        ctxVal[seq[string]]("list", @[]),
-    ]
+    var ctx = Context()
 
     for output in parse(tokens, tags, ctx):
         echo(output)
