@@ -1,6 +1,6 @@
 from framework/request import PRequest
 from framework/response import PResponse, PTemplateResponse
-from framework/nimtpl/tplcontext import ctxVal, getContext
+from framework/nimtpl/tplcontext import ctxVal, initContext
 from framework/nimtpl/tplexceptions import ETemplateSyntaxError
 from framework/nimtpl/tplutils import getTemplateLinesAround
 
@@ -9,7 +9,7 @@ from strutils import strip, splitLines
 
 method exceptionView*(request: PRequest,
                       exc: ref E_Base): PResponse {.cdecl.} =
-    var ctx = getContext()
+    var ctx = initContext()
     
     ctxVal[string](ctx, "message", exc.msg)
 
@@ -23,7 +23,7 @@ method exceptionView*(request: PRequest,
                                                      exc.templateLine, 5)
 
     var stackTraceLines = getStackTrace(exc).strip().splitLines()
-    var ctx = getContext()
+    var ctx = initContext()
 
     stackTraceLines = stackTraceLines[1..high(stackTraceLines)]
 

@@ -37,6 +37,6 @@ proc ctxVal*[T](ctx: var Context, key: string, val: T) =
             key: key, kind: justString, justStr: val))
 
 
-proc getContext*(): Context =
+proc initContext*(): Context =
     result.counter = 0
     newSeq(result.data, 64)
