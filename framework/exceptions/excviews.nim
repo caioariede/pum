@@ -1,6 +1,6 @@
 from framework/request import PRequest
 from framework/response import PResponse, PTemplateResponse
-from framework/nimtpl/tplcontext import ctxVal, initContext
+from framework/nimtpl/tplcontext import addCtx, initContext
 from framework/nimtpl/tplexceptions import ETemplateSyntaxError
 from framework/nimtpl/tplutils import getTemplateLinesAround
 
@@ -11,7 +11,7 @@ method exceptionView*(request: PRequest,
                       exc: ref E_Base): PResponse {.cdecl.} =
     var ctx = initContext()
     
-    ctxVal[string](ctx, "message", exc.msg)
+    addCtx[string](ctx, "message", exc.msg)
 
     return PTemplateResponse(template_name: "framework/templates/error.html",
                              context: ctx)
@@ -29,10 +29,10 @@ method exceptionView*(request: PRequest,
 
     add(stackTraceLines, exc.templateName & "(" & $exc.templateLine & ")")
 
-    ctxVal[string](ctx, "message", exc.msg)
-    ctxVal[string](ctx, "templateLine", $exc.templateLine)
-    ctxVal[seq[string]](ctx, "stacktrace", stackTraceLines)
-    ctxVal[seq[string]](ctx, "templateLinesAround", templateLinesAround)
+    addCtx[string](ctx, "message", exc.msg)
+    addCtx[string](ctx, "templateLine", $exc.templateLine)
+    addCtx[seq[string]](ctx, "stacktrace", stackTraceLines)
+    addCtx[seq[string]](ctx, "templateLinesAround", templateLinesAround)
 
     return PTemplateResponse(
         template_name: "framework/templates/template_error.html",

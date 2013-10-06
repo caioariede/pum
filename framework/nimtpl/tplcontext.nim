@@ -28,7 +28,7 @@ proc remContextVariable*(ctx: var Context, key: string) =
     del(ctx, key)
 
 
-proc ctxVal*[T](ctx: var Context, key: string, val: T) =
+proc addCtx*[T](ctx: var Context, key: string, val: T) =
     when T is seq[string]:
         add(ctx, key, PContextValue(
             key: key, kind: sequenceOfStrings, seqStr: val))

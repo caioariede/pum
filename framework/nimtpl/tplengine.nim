@@ -1,4 +1,4 @@
-from framework/nimtpl/tplcontext import Context, ctxVal
+from framework/nimtpl/tplcontext import Context
 from framework/nimtpl/tpltokenizer import tokenize
 from framework/nimtpl/tplparser import Tag, parse
 
