@@ -2,8 +2,8 @@ from httpserver import run
 from sockets import TPort
 from terminal import EraseLine, setForegroundColor, fgGreen, resetAttributes
 
-from framework/handler import getHandler
-from framework/urlpatterns import Patterns
+from framework.handler import getHandler
+from framework.urlpatterns import Patterns
 
 
 proc controlCHook() {.noconv.} =

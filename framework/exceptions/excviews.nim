@@ -1,7 +1,7 @@
-from framework/http import Request, Response, TemplateResponse
-from framework/nimtpl/tplcontext import addCtx, initContext
-from framework/nimtpl/tplexceptions import ETemplateSyntaxError
-from framework/nimtpl/tplutils import getTemplateLinesAround
+from framework.http import Request, Response, TemplateResponse
+from framework.nimtpl.tplcontext import addCtx, initContext
+from framework.nimtpl.tplexceptions import ETemplateSyntaxError
+from framework.nimtpl.tplutils import getTemplateLinesAround
 
 from strutils import strip, splitLines
 
