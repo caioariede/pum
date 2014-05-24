@@ -2,9 +2,8 @@ from sockets import TSocket, TPort
 from os import getCurrentDir
 from re import re, match
 
-from framework/urlpatterns import TPatterns
-from framework/request import PRequest
-from framework/response import render
+from framework/urlpatterns import Patterns
+from framework/http import Request, render
 from framework/exceptions/excviews import exceptionView
 
 
@@ -13,10 +12,10 @@ type
                            path, query: string): bool {.closure.}
 
 
-proc getHandler*(patterns: TPatterns): handlerCallback =
+proc getHandler*(patterns: Patterns): handlerCallback =
     return proc(client: TSocket, path, query: string): bool {.closure.} =
-        let request = PRequest(client: client, path: path, query: query,
-                               documentRoot: getCurrentDir())
+        let request = Request(client: client, path: path, query: query,
+                              documentRoot: getCurrentDir())
 
         for pattern in patterns:
             if match(path, pattern.regex):

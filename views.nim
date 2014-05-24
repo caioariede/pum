@@ -1,16 +1,14 @@
-from framework/request import PRequest
-from framework/response import PResponse, PTemplateResponse
+from framework/http import Request, Response, TemplateResponse
 from framework/nimtpl/tplcontext import initContext, addCtx
 
 
-proc home*(request: PRequest): PResponse {.cdecl.} =
+proc home*(request: Request): Response {.cdecl.} =
     var ctx = initContext()
 
     addCtx[seq[string]](ctx, "letters", @["a", "b", "c"])
 
-    return PTemplateResponse(template_name: "templates/home.html",
-                             context: ctx)
+    return TemplateResponse(template_name: "templates/home.html", context: ctx)
 
 
-proc put*(request: PRequest): PResponse {.cdecl.} =
-    return PTemplateResponse(template_name: "templates/put.html")
+proc put*(request: Request): Response {.cdecl.} =
+    return TemplateResponse(template_name: "templates/put.html")

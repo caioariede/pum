@@ -1,12 +1,11 @@
 from re import TRegEx
 
-from framework/request import PRequest
-from framework/response import PResponse
+from framework/http import Request, Response
 
 
 type
-    TView = proc (request: PRequest): PResponse {.cdecl.}
+    TView = proc (request: Request): Response {.cdecl.}
     TPattern* = tuple
         regex: TRegEx
         view: TView
-    TPatterns* = seq[TPattern]
+    Patterns* = seq[TPattern]

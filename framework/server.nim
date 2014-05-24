@@ -3,7 +3,7 @@ from sockets import TPort
 from terminal import EraseLine, setForegroundColor, fgGreen, resetAttributes
 
 from framework/handler import getHandler
-from framework/urlpatterns import TPatterns
+from framework/urlpatterns import Patterns
 
 
 proc controlCHook() {.noconv.} =
@@ -13,7 +13,7 @@ proc controlCHook() {.noconv.} =
     quit(QuitSuccess)
 
 
-proc runServer*(patterns: TPatterns) =
+proc runServer*(patterns: Patterns) =
     # Quit gracefully
     setControlCHook(controlCHook)
 

@@ -1,8 +1,7 @@
-from framework/request import PRequest
-from framework/response import PResponse, PFileResponse
+from framework/http import Request, Response, FileResponse
 
 
-proc serveStatic*(request: PRequest): PResponse {.cdecl.} =
+proc serveStatic*(request: Request): Response {.cdecl.} =
     echo("assets/" & request.path[1..high(request.path)])
-    return PFileResponse(
+    return FileResponse(
         filename: "assets/" & request.path[1..high(request.path)])
