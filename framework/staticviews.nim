@@ -1,4 +1,4 @@
-from framework/http import Request, Response, FileResponse
+from framework.http import Request, Response, FileResponse
 
 
 proc serveStatic*(request: Request): Response {.cdecl.} =

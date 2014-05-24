@@ -2,9 +2,9 @@ from sockets import TSocket, TPort
 from os import getCurrentDir
 from re import re, match
 
-from framework/urlpatterns import Patterns
-from framework/http import Request, render
-from framework/exceptions/excviews import exceptionView
+from framework.urlpatterns import Patterns
+from framework.http import Request, render
+from framework.exceptions.excviews import exceptionView
 
 
 type

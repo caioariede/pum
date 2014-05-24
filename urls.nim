@@ -1,7 +1,7 @@
 from re import re
 
-from framework/urlpatterns import Patterns
-from framework/staticviews import serveStatic
+from framework.urlpatterns import Patterns
+from framework.staticviews import serveStatic
 
 from views import home, put
 

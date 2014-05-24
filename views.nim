@@ -1,5 +1,5 @@
-from framework/http import Request, Response, TemplateResponse
-from framework/nimtpl/tplcontext import initContext, addCtx
+from framework.http import Request, Response, TemplateResponse
+from framework.nimtpl.tplcontext import initContext, addCtx
 
 
 proc home*(request: Request): Response {.cdecl.} =

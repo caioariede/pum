@@ -1,4 +1,4 @@
-from framework/server import runServer
+from framework.server import runServer
 
 from urls import patterns
 

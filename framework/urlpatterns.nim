@@ -1,6 +1,6 @@
 from re import TRegEx
 
-from framework/http import Request, Response
+from framework.http import Request, Response
 
 
 type

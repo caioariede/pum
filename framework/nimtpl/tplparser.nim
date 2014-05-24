@@ -1,9 +1,9 @@
 from strutils import strip
 
-from framework/nimtpl/tpltokenizer import Token, BlockToken, VariableToken,
+from framework.nimtpl.tpltokenizer import Token, BlockToken, VariableToken,
     CommentToken, TextToken
 
-from framework/nimtpl/tplcontext import Context, getContextVariable
+from framework.nimtpl.tplcontext import Context, getContextVariable
 
 
 type

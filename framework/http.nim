@@ -1,10 +1,10 @@
 from os import existsFile
 from sockets import TSocket, send
 
-from framework/serve import safeServeFile
+from framework.serve import safeServeFile
 
-from framework/nimtpl/tplengine import renderTemplate
-from framework/nimtpl/tplcontext import Context
+from framework.nimtpl.tplengine import renderTemplate
+from framework.nimtpl.tplcontext import Context
 
 
 type

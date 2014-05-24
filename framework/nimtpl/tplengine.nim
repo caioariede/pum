@@ -1,9 +1,9 @@
-from framework/nimtpl/tplcontext import Context
-from framework/nimtpl/tpltokenizer import tokenize
-from framework/nimtpl/tplparser import Tag, parse
+from framework.nimtpl.tplcontext import Context
+from framework.nimtpl.tpltokenizer import tokenize
+from framework.nimtpl.tplparser import Tag, parse
 
-from framework/nimtpl/tpltags/tpltag_for import tagFor
-from framework/nimtpl/tplexceptions import ETemplateSyntaxError
+from framework.nimtpl.tpltags.tpltag_for import tagFor
+from framework.nimtpl.tplexceptions import ETemplateSyntaxError
 
 
 proc renderTemplate*(content: string, templateName: string,

@@ -1,4 +1,4 @@
-from framework/utils/tables2 import TTable, del, add, `[]`
+from framework.utils.tables2 import TTable, del, add, `[]`
 
 
 type
